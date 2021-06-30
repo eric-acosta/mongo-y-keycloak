@@ -1,0 +1,78 @@
+version: '3.1'
+services:
+  db_postgresql:
+    image: ryukdocker/bdpostgre10:1.0.0
+    container_name: postgreContainer
+    restart: always
+    environment:
+      POSTGRES_DB: TEACHERSECURITYBD
+      POSTGRES_PASSWORD: teacherPass
+      POSTGRES_USER: teacherAdmin
+    ports:
+      - 5432:5432
+    networks:
+      - backend
+    volumes:
+      - my-data-postgre:/var/lib/postgresql/data    
+#PRIMARY with replica
+  db_mongo:
+    image: mongo:4.4.1
+    container_name: mongoContainer
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - backend
+    volumes:
+      - my-data-mongo:/data/db
+  db_mongo_express:
+    image: mongo-express
+    container_name: mongoExpressContainer
+    restart: always
+    ports:
+        - 8083:8081
+    environment:
+      ME_CONFIG_OPTIONS_EDITORTHEME: "ambiance"
+      ME_CONFIG_MONGODB_SERVER: mongoContainer 
+    networks: 
+      - backend
+  service_keycloak:
+    image: jboss/keycloak:9.0.0
+    container_name: keycloakContainer
+    restart: always
+    ports:
+      - 8082:8080
+    environment: 
+      KEYCLOAK_USER: admincloak
+      KEYCLOAK_PASSWORD: teacherPass
+      DB_VENDOR: postgres
+      DB_DATABASE: TEACHERSECURITYBD
+      DB_USER: teacherAdmin
+      DB_PASSWORD: teacherPass
+      DB_ADDR: postgreContainer
+      KEYCLOAK_IMPORT: /tmp/realm-teacher.json
+    command:
+        - "-b 0.0.0.0"
+        - "-Dkeycloak.profile.feature.upload_scripts=enabled"  
+    networks:
+      - backend
+    depends_on:
+      - db_postgresql
+    volumes:
+      - ./others/realm-teacher.json:/tmp/realm-teacher.json
+  pg_admin:
+    container_name: pgAdminContainer
+    image: fenglc/pgadmin4
+    ports:
+      - 5050:5050
+    depends_on:
+      - db_postgresql
+    networks:
+      - backend
+networks:
+  backend:
+    external: true
+volumes:
+  #voulme for primary mongo 
+  my-data-mongo:
+  my-data-postgre:
