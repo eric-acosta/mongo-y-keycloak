@@ -16,7 +16,8 @@ services:
       - my-data-postgre:/var/lib/postgresql/data    
 #PRIMARY with replica
   db_mongo:
-    image: mongo:4.4.1
+    build: ./mongodb
+    image: ryukdocker/bdmongo4:1.0.1
     container_name: mongoContainer
     restart: always
     ports:
@@ -24,7 +25,7 @@ services:
     networks:
       - backend
     volumes:
-      - my-data-mongo:/data/db
+      - my-data-mongo:/data/db    
   db_mongo_express:
     image: mongo-express
     container_name: mongoExpressContainer
